@@ -1,4 +1,4 @@
-module imaginary-exporter
+module github.com/marcfrederick/imaginary-exporter
 
 go 1.20
 

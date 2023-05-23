@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
-	"imaginary-exporter/pkg/imaginary"
+	"github.com/marcfrederick/imaginary-exporter/pkg/imaginary"
 )
 
 // ImaginaryCollector collects metrics from a given Imaginary instance.
