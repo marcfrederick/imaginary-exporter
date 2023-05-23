@@ -3,11 +3,13 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // ImaginaryMetrics represents the metrics provided by Imaginary.
@@ -28,13 +30,15 @@ type ImaginaryMetrics struct {
 func getMetrics(url string) (*ImaginaryMetrics, error) {
 	resp, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error getting metrics: %w", err)
 	}
 	defer resp.Body.Close()
 
 	metrics := &ImaginaryMetrics{}
-	err = json.NewDecoder(resp.Body).Decode(metrics)
-	return metrics, err
+	if err = json.NewDecoder(resp.Body).Decode(metrics); err != nil {
+		return nil, fmt.Errorf("error decoding metrics: %w", err)
+	}
+	return metrics, nil
 }
 
 // ImaginaryCollector collects metrics from a given Imaginary instance.
