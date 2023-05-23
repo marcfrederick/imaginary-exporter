@@ -1,49 +1,20 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"imaginary-exporter/pkg/imaginary"
 )
-
-// ImaginaryMetrics represents the metrics provided by Imaginary.
-type ImaginaryMetrics struct {
-	Uptime               float64 `json:"uptime"`
-	AllocatedMemory      float64 `json:"allocatedMemory"`
-	TotalAllocatedMemory float64 `json:"totalAllocatedMemory"`
-	Goroutines           float64 `json:"goroutines"`
-	CompletedGCCycles    float64 `json:"completedGCCycles"`
-	CPUs                 float64 `json:"cpus"`
-	MaxHeapUsage         float64 `json:"maxHeapUsage"`
-	HeapInUse            float64 `json:"heapInUse"`
-	ObjectsInUse         float64 `json:"objectsInUse"`
-	OSMemoryObtained     float64 `json:"OSMemoryObtained"`
-}
-
-// getMetrics reads metrics from the given Imaginary url.
-func getMetrics(url string) (*ImaginaryMetrics, error) {
-	resp, err := http.Get(url)
-	if err != nil {
-		return nil, fmt.Errorf("error getting metrics: %w", err)
-	}
-	defer resp.Body.Close()
-
-	metrics := &ImaginaryMetrics{}
-	if err = json.NewDecoder(resp.Body).Decode(metrics); err != nil {
-		return nil, fmt.Errorf("error decoding metrics: %w", err)
-	}
-	return metrics, nil
-}
 
 // ImaginaryCollector collects metrics from a given Imaginary instance.
 type ImaginaryCollector struct {
-	url                        string
+	client                     *imaginary.Client
 	uptimeMetric               *prometheus.Desc
 	allocatedMemoryMetric      *prometheus.Desc
 	totalAllocatedMemoryMetric *prometheus.Desc
@@ -59,9 +30,9 @@ type ImaginaryCollector struct {
 var _ prometheus.Collector = (*ImaginaryCollector)(nil)
 
 // newImaginaryCollector creates a new ImaginaryCollector and initializes it.
-func newImaginaryCollector(url string) *ImaginaryCollector {
+func newImaginaryCollector(client *imaginary.Client) *ImaginaryCollector {
 	return &ImaginaryCollector{
-		url:                        url,
+		client:                     client,
 		uptimeMetric:               prometheus.NewDesc("imaginary_uptime", "The current uptime.", nil, nil),
 		allocatedMemoryMetric:      prometheus.NewDesc("imaginary_allocated_memory", "The currently allocated memory.", nil, nil),
 		totalAllocatedMemoryMetric: prometheus.NewDesc("imaginary_allocated_memory_total", "The total allocated memory.", nil, nil),
@@ -75,7 +46,7 @@ func newImaginaryCollector(url string) *ImaginaryCollector {
 	}
 }
 
-func (c ImaginaryCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *ImaginaryCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.uptimeMetric
 	ch <- c.uptimeMetric
 	ch <- c.allocatedMemoryMetric
@@ -89,21 +60,21 @@ func (c ImaginaryCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.oSMemoryObtainedMetric
 }
 
-func (c ImaginaryCollector) Collect(ch chan<- prometheus.Metric) {
-	res, err := getMetrics(c.url)
+func (c *ImaginaryCollector) Collect(ch chan<- prometheus.Metric) {
+	res, err := c.client.GetHealthStats()
 	if err != nil {
-		log.Printf("failed to fetch metrics from '%s': %+v", c.url, err)
+		log.Printf("error getting metrics: %s", err)
 		return
 	}
-	ch <- prometheus.MustNewConstMetric(c.uptimeMetric, prometheus.CounterValue, res.Uptime)
+	ch <- prometheus.MustNewConstMetric(c.uptimeMetric, prometheus.CounterValue, float64(res.Uptime))
 	ch <- prometheus.MustNewConstMetric(c.allocatedMemoryMetric, prometheus.GaugeValue, res.AllocatedMemory)
 	ch <- prometheus.MustNewConstMetric(c.totalAllocatedMemoryMetric, prometheus.GaugeValue, res.TotalAllocatedMemory)
-	ch <- prometheus.MustNewConstMetric(c.goroutinesMetric, prometheus.GaugeValue, res.Goroutines)
-	ch <- prometheus.MustNewConstMetric(c.completedGCCyclesMetric, prometheus.GaugeValue, res.CompletedGCCycles)
-	ch <- prometheus.MustNewConstMetric(c.cpusMetric, prometheus.GaugeValue, res.CPUs)
+	ch <- prometheus.MustNewConstMetric(c.goroutinesMetric, prometheus.GaugeValue, float64(res.Goroutines))
+	ch <- prometheus.MustNewConstMetric(c.completedGCCyclesMetric, prometheus.GaugeValue, float64(res.CompletedGCCycles))
+	ch <- prometheus.MustNewConstMetric(c.cpusMetric, prometheus.GaugeValue, float64(res.CPUs))
 	ch <- prometheus.MustNewConstMetric(c.maxHeapUsageMetric, prometheus.GaugeValue, res.MaxHeapUsage)
 	ch <- prometheus.MustNewConstMetric(c.heapInUseMetric, prometheus.GaugeValue, res.HeapInUse)
-	ch <- prometheus.MustNewConstMetric(c.objectsInUseMetric, prometheus.GaugeValue, res.ObjectsInUse)
+	ch <- prometheus.MustNewConstMetric(c.objectsInUseMetric, prometheus.GaugeValue, float64(res.ObjectsInUse))
 	ch <- prometheus.MustNewConstMetric(c.oSMemoryObtainedMetric, prometheus.GaugeValue, res.OSMemoryObtained)
 }
 
@@ -118,10 +89,10 @@ func main() {
 	imaginaryURL := flag.String("url", "", "url of the imaginary instance")
 	flag.Parse()
 	if !isURL(*imaginaryURL) {
-		log.Fatalf("Given URL '%s' is invalid.", *imaginaryURL)
+		log.Fatalf("the given imaginary URL '%s' is invalid.", *imaginaryURL)
 	}
 
-	c := newImaginaryCollector(*imaginaryURL + "/health")
+	c := newImaginaryCollector(imaginary.NewClient(*imaginaryURL))
 	if err := prometheus.Register(c); err != nil {
 		log.Fatalf("failed to register imaginary collector: %+v", err)
 	}
