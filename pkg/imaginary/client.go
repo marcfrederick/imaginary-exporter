@@ -6,15 +6,17 @@ import (
 	"net/http"
 )
 
+// Client represents a client for accessing Imaginary services.
 type Client struct {
 	BaseURL string
 }
 
+// NewClient creates a new Client instance with the specified base URL.
 func NewClient(baseURL string) *Client {
 	return &Client{BaseURL: baseURL}
 }
 
-// HealthStats represents the metrics provided by Imaginary.
+// HealthStats represents the health metrics provided by the Imaginary service.
 type HealthStats struct {
 	Uptime               int64   `json:"uptime"`
 	AllocatedMemory      float64 `json:"allocatedMemory"`
@@ -28,7 +30,7 @@ type HealthStats struct {
 	OSMemoryObtained     float64 `json:"OSMemoryObtained"`
 }
 
-// GetHealthStats reads metrics.
+// GetHealthStats retrieves the health statistics from the Imaginary service.
 func (c *Client) GetHealthStats() (*HealthStats, error) {
 	resp, err := http.Get(c.BaseURL + "/health")
 	if err != nil {
