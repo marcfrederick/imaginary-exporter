@@ -3,7 +3,7 @@ module github.com/marcfrederick/imaginary-exporter
 go 1.21
 
 require (
-	github.com/prometheus/client_golang v1.17.0
+	github.com/prometheus/client_golang v1.18.0
 	github.com/urfave/cli/v2 v2.27.1
 )
 
