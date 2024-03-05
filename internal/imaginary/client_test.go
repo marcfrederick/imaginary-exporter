@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/marcfrederick/imaginary-exporter/pkg/imaginary"
+	"github.com/marcfrederick/imaginary-exporter/internal/imaginary"
 )
 
 func TestClient_GetHealthStats(t *testing.T) {

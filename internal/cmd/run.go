@@ -10,8 +10,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/urfave/cli/v2"
 
-	"github.com/marcfrederick/imaginary-exporter/pkg/collector"
-	"github.com/marcfrederick/imaginary-exporter/pkg/imaginary"
+	"github.com/marcfrederick/imaginary-exporter/internal/collector"
+	"github.com/marcfrederick/imaginary-exporter/internal/imaginary"
 )
 
 func Run(cliCtx *cli.Context) (int, error) {
