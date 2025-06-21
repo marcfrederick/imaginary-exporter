@@ -18,4 +18,5 @@
 .idea/
 
 # Binary output
+dist/
 imaginary-exporter

@@ -11,6 +11,33 @@
 
 Prometheus exporter for [Imaginary](https://github.com/h2non/imaginary) written in Go.
 
+## Installation
+
+### From Binary
+
+Download the latest release from the [releases page](https://github.com/marcfrederick/imaginary-exporter/releases) and extract it to a directory in your `PATH`.
+
+### From Source
+
+```bash
+go install github.com/marcfrederick/imaginary-exporter@latest
+```
+
+### From Homebrew
+
+```bash
+brew tap marcfrederick/homebrew-tap
+brew install imaginary-exporter
+```
+
+### From Docker
+
+```bash
+docker run --name imaginary-exporter \
+  -p 8080:8080 \
+  ghcr.io/marcfrederick/imaginary-exporter:latest
+```
+
 ## Compatibility
 
 The exporter in compatible with all versions exporting the `/health` endpoint (v0.1.18+)
