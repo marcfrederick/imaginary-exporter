@@ -9,6 +9,7 @@ permissions:
   contents: write  # Create releases, upload artifacts, and update the repository
   id-token: write  # Required for attest build provenance
   packages: write  # Required for publishing Docker images
+  attestations: write  # Required for attest build provenance
 
 jobs:
   goreleaser:
